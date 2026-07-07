@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr, computed_field
+from pydantic import Field, SecretStr, computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -57,6 +57,11 @@ class OpenAISettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
 
+    @field_validator("api_key", mode="before")
+    @classmethod
+    def _empty_secret_to_none(cls, value: object) -> object:
+        return _blank_to_none(value)
+
 
 class GoogleSettings(BaseSettings):
     client_id: SecretStr | None = Field(default=None, alias="GOOGLE_CLIENT_ID")
@@ -69,6 +74,20 @@ class GoogleSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
 
+    @field_validator(
+        "client_id",
+        "client_secret",
+        "refresh_token",
+        "gmail_sender_email",
+        "youtube_api_key",
+        "search_api_key",
+        "search_engine_id",
+        mode="before",
+    )
+    @classmethod
+    def _empty_values_to_none(cls, value: object) -> object:
+        return _blank_to_none(value)
+
 
 class ApolloSettings(BaseSettings):
     api_key: SecretStr | None = Field(default=None, alias="APOLLO_API_KEY")
@@ -76,11 +95,21 @@ class ApolloSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
 
+    @field_validator("api_key", mode="before")
+    @classmethod
+    def _empty_secret_to_none(cls, value: object) -> object:
+        return _blank_to_none(value)
+
 
 class GitHubSettings(BaseSettings):
     token: SecretStr | None = Field(default=None, alias="GITHUB_TOKEN")
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
+
+    @field_validator("token", mode="before")
+    @classmethod
+    def _empty_secret_to_none(cls, value: object) -> object:
+        return _blank_to_none(value)
 
 
 class PlaywrightSettings(BaseSettings):
@@ -88,6 +117,11 @@ class PlaywrightSettings(BaseSettings):
     chromium_executable: Path | None = Field(default=None, alias="PLAYWRIGHT_CHROMIUM_EXECUTABLE")
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
+
+    @field_validator("chromium_executable", mode="before")
+    @classmethod
+    def _empty_path_to_none(cls, value: object) -> object:
+        return _blank_to_none(value)
 
 
 class CreatorAnalysisSettings(BaseSettings):
@@ -169,3 +203,9 @@ def get_settings() -> Settings:
     settings.paths.prompts_dir.mkdir(parents=True, exist_ok=True)
     settings.database.sqlite_path.parent.mkdir(parents=True, exist_ok=True)
     return settings
+
+
+def _blank_to_none(value: object) -> object:
+    if isinstance(value, str) and not value.strip():
+        return None
+    return value

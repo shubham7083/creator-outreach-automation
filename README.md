@@ -42,7 +42,7 @@ The local URL is `http://localhost:8501`.
 ## Deploy to Streamlit Community Cloud
 
 This project is prepared for Streamlit Community Cloud with `runtime.txt`,
-`packages.txt`, `.streamlit/config.toml`, and `.streamlit/secrets.toml.example`.
+`.streamlit/config.toml`, and `.streamlit/secrets.toml.example`.
 
 1. Push this folder to a GitHub repository.
 2. Open [Streamlit Community Cloud](https://share.streamlit.io/).
@@ -55,11 +55,13 @@ This project is prepared for Streamlit Community Cloud with `runtime.txt`,
 The app automatically creates and migrates its SQLite database at startup. Missing
 API keys are shown as visible warnings in the UI instead of crashing the app.
 
-For Instagram browser automation on Streamlit Cloud, keep
-`PLAYWRIGHT_CHROMIUM_EXECUTABLE = "/usr/bin/chromium"` in the app secrets. The
-included `packages.txt` installs the matching system browser packages. If browser
-automation is still unavailable in the hosted environment, Instagram analysis
-fails gracefully and YouTube/API-backed workflows remain available.
+This deployment intentionally does not install Debian Chromium through
+`packages.txt`. Current Streamlit Cloud images can mix Debian releases during apt
+resolution, which may make Chromium conflict with audio/system libraries. If a
+browser executable is available in your hosted environment, set
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its absolute path. Otherwise leave it blank.
+Instagram browser automation will fail gracefully with a visible warning, while
+YouTube/API-backed workflows remain available.
 
 ## Project Layout
 
